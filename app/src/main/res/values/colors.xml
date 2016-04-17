@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="grey_text">#C7C7C7</color>
+    <color name="white">#FFFFFF</color>
+    <color name="base_bg">#f4f4f5</color>
+    <color name="grey_divider_thin">#E5E5E5</color>
+    <color name="orange_common">#FFA200</color>
+    <color name="black">#FF000000</color>
+    <color name="grey">#EAEAEA</color>
+    <color name="dark_blue">#0081BA</color>
+    <color name="text_blue">#819BCB</color>
+    <color name="satisfy_btn_bg">#2C9DD5</color>
+    <color name="dissatisfied_btn_bg">#FF6F6F</color>
+    <color name="green">#3FBE7B</color>
+    <color name="grey_border">#CFCED3</color>
+    <color name="yellow_green">#9FCF59</color>
+    <color name="light_black">#888888</color>
+    <color name="shadow">#8c212121</color><!-- 透明阴影 -->
+    <color name="gray_transparent">#94d7d7d7</color><!-- 按下效果的透明灰 -->
+    <color name="white_transparent">#c8ffffff</color><!-- 透明的白色 -->
+    <color name="grey_400">#78909C</color>
+    <color name="green_400">#2BAF2B</color>
+    <color name="background_grey">#EEEEEE</color>
+    <color name="text_color_black">#333333</color>
+    <color name="grey_divider_thick">#F1F1F1</color>
+    <color name="gray">#EEEEEE</color>
+    <color name="text_color">#6D6D6D</color>
+</resources>
