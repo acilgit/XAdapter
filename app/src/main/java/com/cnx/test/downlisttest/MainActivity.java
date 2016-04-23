@@ -1,12 +1,11 @@
 package com.cnx.test.downlisttest;
 
+import android.content.Context;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
-
-import com.cnx.test.downlisttest.adapter.XAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +26,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         btn1.setOnClickListener(this);
         btn2.setOnClickListener(this);
-
     }
 
     @Override
@@ -42,23 +40,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 /**
                  * setting single List popupWindow
                  */
-                final List<UserBean> list = new ArrayList<>();
-                list.add(new UserBean(11, "haha", 0));
-                list.add(new UserBean(12, "hello", 0));
-                list.add(new UserBean(13, "world", 1));
-                list.add(new UserBean(14, "welcome", 0));
+                final List<FirstBean> list = new ArrayList<>();
+                list.add(new FirstBean(11, "haha", 0));
+                list.add(new FirstBean(12, "hello", 0));
+                list.add(new FirstBean(13, "world", 1));
+                list.add(new FirstBean(14, "welcome", 0));
                 int bottomViewLayoutId = 0; // 设置bottomViewLayoutId，0表示没有bottomViewLayout
-                popupWindow = new DownListPopupWindow(this, list, new XAdapter.OnItemClickListener() {
+                popupWindow = new DownListPopupWindow<FirstBean>(this, list, new XAdapter.OnItemClickListener<FirstBean>() {
                     @Override
-                    public void onItemClick(View view, Object item, int pos) {
+                    public void onItemClick(XAdapter.CustomHolder holder, FirstBean item) {
                         // do something...
-                        Toast.makeText(getApplication(), ((UserBean) item).getName() + " ID:"+((UserBean) item).getID(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplication(), item.getName() + " ID:"+item.getID(), Toast.LENGTH_SHORT).show();
                     }
                 }, bottomViewLayoutId) {
                     @Override
-                    protected String getItemText(Object item) {
-                        return ((UserBean) item).getName();
+                    protected String getItemText(FirstBean item) {
+                        return item.getName();
                     }
+
                 };
                 popupWindow.setListHeight(480);
                 popupWindow.showAsDropDown(v);
@@ -72,41 +71,45 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 /**
                  * setting single List popupWindow
                  */
-                final List<UserBean> list2 = new ArrayList<>();
-                list2.add(new UserBean(31, "ha--ha", 0));
-                list2.add(new UserBean(32, "he--llo", 0));
-                list2.add(new UserBean(33, "wo--rld", 1));
-                list2.add(new UserBean(34, "we--lcome", 0));
+                final List<FirstBean> list2 = new ArrayList<>();
+                list2.add(new FirstBean(31, "ha--ha", 0));
+                list2.add(new FirstBean(32, "he--llo", 0));
+                list2.add(new FirstBean(33, "wo--rld", 1));
+                list2.add(new FirstBean(34, "we--lcome", 0));
                 int dBottomViewLayoutId = R.layout.layout_bottom_confirm; // 设置bottomViewLayoutId，0表示没有bottomViewLayout
-                downDoubleListPopupWindow = new DownDoubleListPopupWindow(this, list2, new XAdapter.OnItemClickListener() {
+                downDoubleListPopupWindow = new DownDoubleListPopupWindow<FirstBean>(this, list2, new XAdapter.OnItemClickListener() {
                     @Override
-                    public void onItemClick(View view, Object item, int pos) {
+                    public void onItemClick(XAdapter.CustomHolder holder, Object item) {
                         // do something...
-                        Toast.makeText(getApplication(), ((EventBean) item).getDes() + " ID:"+((EventBean) item).getID(), Toast.LENGTH_SHORT).show();
+                       FirstBean aBean =  ((FirstBean) holder.getRootView().getTag());
+
+                        Toast.makeText(getApplication(), ((SecondBean) item).getDes() + " ID:" + aBean.getID() +" "+((SecondBean) item).getID(), Toast.LENGTH_SHORT).show();
                     }
                 }, dBottomViewLayoutId) {
                     @Override
-                    protected String getFirstListItemText(Object item) {
-                        return ((UserBean) item).getName();
+                    protected String getFirstListItemText(FirstBean item) {
+                        return item.getName();
                     }
 
                     @Override
                     protected String getSecondListItemText(Object item) {
-                        return ((EventBean) item).getDes();
+                        return ((SecondBean) item).getDes();
                     }
 
                     @Override
-                    protected List getSecondAdapterList(Object firstListItem) {
-                        int id = ((UserBean) firstListItem).getID();
-                        final List<EventBean> list = new ArrayList<>();
-                        list.add(new EventBean(id +"-Eventaha", id + 2000));
-                        list.add(new EventBean(id +"-Eventello", id + 2100));
-                        list.add(new EventBean(id +"-Eventorld", id + 2200));
-                        list.add(new EventBean(id +"-Eventelcome", id + 2300));
-                        list.add(new EventBean(id +"-Eventoewdd", id + 2400));
-                        list.add(new EventBean(id +"-Eventelhhyuome", id + 2500));
+                    protected List getSecondAdapterList(FirstBean firstListItem) {
+                        int id = firstListItem.getID();
+                        final List<SecondBean> list = new ArrayList<>();
+                        // 取得第二列表的数据
+                        list.add(new SecondBean(id +"-Eventaha", id + 2000));
+                        list.add(new SecondBean(id +"-Eventello", id + 2100));
+                        list.add(new SecondBean(id +"-Eventorld", id + 2200));
+                        list.add(new SecondBean(id +"-Eventelcome", id + 2300));
+                        list.add(new SecondBean(id +"-Eventoewdd", id + 2400));
+                        list.add(new SecondBean(id +"-Eventelhhyuome", id + 2500));
                         return list;
                     }
+
                 };
                 downDoubleListPopupWindow.getBottomView(R.id.btnCancel).setOnClickListener(this);
                 downDoubleListPopupWindow.getBottomView(R.id.btnConfirm).setOnClickListener(this);

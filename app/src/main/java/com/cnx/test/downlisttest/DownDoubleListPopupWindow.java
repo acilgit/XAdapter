@@ -1,6 +1,8 @@
 package com.cnx.test.downlisttest;
 
 import android.app.Activity;
+import android.graphics.drawable.BitmapDrawable;
+import android.support.annotation.LayoutRes;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.SparseArray;
@@ -12,8 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
-import com.cnx.test.downlisttest.adapter.XAdapter;
-
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -25,6 +26,7 @@ public abstract class DownDoubleListPopupWindow<T> extends PopupWindow {
     private Activity activity;
     private LayoutInflater inflater;
 
+    private List<Integer> selectedList;
     private List<T> filters;
     private int selectedPosition = -1;
     private int selectedPositionSecond = -1;
@@ -34,8 +36,9 @@ public abstract class DownDoubleListPopupWindow<T> extends PopupWindow {
     private View bottomLayout;
     private View rootView;
     private RecyclerView rvFirstFilter, rvFilter;
+    private XAdapter<T> firstAdapter, adapter;
 
-    public DownDoubleListPopupWindow(Activity activity, List<T> filters, XAdapter.OnItemClickListener itemClickListener, int bottomLayoutId) {
+    public DownDoubleListPopupWindow(Activity activity, List<T> filters, XAdapter.OnItemClickListener itemClickListener, @LayoutRes int bottomLayoutId) {
         super(activity);
         this.activity = activity;
         this.itemClickListener = itemClickListener;
@@ -49,6 +52,10 @@ public abstract class DownDoubleListPopupWindow<T> extends PopupWindow {
                 linearLayout.addView(bottomLayout);
             }
         }
+        selectedList = new ArrayList<>();
+        for (int i = 0; i < filters.size(); i++) {
+            selectedList.add( 0);
+        }
     }
 
     private void initViews() {
@@ -56,11 +63,10 @@ public abstract class DownDoubleListPopupWindow<T> extends PopupWindow {
         rootView = inflater.inflate(R.layout.popup_window_filter, null);
 
         setContentView(rootView);
-        //设置SelectPicPopupWindow弹出窗体的宽
         this.setWidth(ViewGroup.LayoutParams.MATCH_PARENT);
-        //设置SelectPicPopupWindow弹出窗体的高
         this.setHeight(ViewGroup.LayoutParams.MATCH_PARENT);
-        this.setBackgroundDrawable(null);
+        this.setBackgroundDrawable(new BitmapDrawable());
+        this.setFocusable(true);
         update();
 
         listLayout = (LinearLayout) rootView.findViewById(R.id.llFilterList);
@@ -73,40 +79,39 @@ public abstract class DownDoubleListPopupWindow<T> extends PopupWindow {
         /**
          * 第一个列表
          */
-        XAdapter firstAdapter = new XAdapter(activity, filters, R.layout.popup_item_filter) {
-            @Override
-            public void creatingHolder(final CustomHolder holder, final List dataList, int viewType) {
-                holder.getView(R.id.select_arrow);
-                holder.getView(R.id.filter_name);
-                holder.getRootView().setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        int oldPos = selectedPosition;
-                        int pos = holder.getAdapterPosition();
-                        selectedPosition = pos;
-                        /**
-                         * 子列表
-                         */
-                        XAdapter adapter = setSecondAdapter(getSecondAdapterList((T) dataList.get(pos)));
-                        adapter.setOnItemClickListener(itemClickListener);
-                        rvFilter.setAdapter(adapter);
+        firstAdapter = new XAdapter<T>(activity, filters, R.layout.popup_item_filter) {
 
-                        if (adapter.getItemCount()>0) {
-                            selectedPositionSecond = 0;
-                        }
-                        notifyItemChanged(pos);
-                        if (oldPos >= 0) {
-                            notifyItemChanged(oldPos);
-                        }
-                    }
-                });
+            @Override
+            protected void handleItemViewClick(CustomHolder holder, T item) {
+                int oldPos = selectedPosition;
+                int pos = holder.getAdapterPosition();
+                selectedPosition = pos;
+                notifyItemChanged(pos);
+                if (oldPos >= 0) {
+                    notifyItemChanged(oldPos);
+                }
+                /**
+                 * 更新子列表
+                 */
+                List list = getSecondAdapterList(item);
+                if (list.size()>0) {
+                    selectedPositionSecond = 0;
+                }
+                adapter.setDataList(list);
             }
 
             @Override
-            public void bindingHolder(CustomHolder holder, List dataList, int pos) {
-                TextView tvName = (TextView) holder.getView(R.id.filter_name);
-                ImageView ivArrow = (ImageView) holder.getView(R.id.select_arrow);
-                tvName.setText(getFirstListItemText((T) dataList.get(pos)));
+            public void creatingHolder(CustomHolder holder, List<T> dataList, int adapterPos, int viewType) {
+                holder.getView(R.id.select_arrow);
+                holder.getView(R.id.filter_name);
+
+            }
+
+            @Override
+            public void bindingHolder(CustomHolder holder, List<T> dataList, int pos) {
+                TextView tvName =  holder.getView(R.id.filter_name);
+                ImageView ivArrow =  holder.getView(R.id.select_arrow);
+                tvName.setText(getFirstListItemText(dataList.get(pos)));
                 if (pos == selectedPosition) {
                     tvName.setTextColor(activity.getResources().getColor(R.color.text_blue));
                     holder.getRootView().setBackgroundResource(R.color.white);
@@ -117,55 +122,58 @@ public abstract class DownDoubleListPopupWindow<T> extends PopupWindow {
                 ivArrow.setVisibility(View.GONE);
             }
         };
+        List<T> list = new ArrayList<>();
         if (filters.size()>0) {
             selectedPosition = 0;
-            XAdapter adapter = setSecondAdapter(getSecondAdapterList(filters.get(0)));
-            if (adapter.getItemCount()>0) {
+           list = getSecondAdapterList(filters.get(0));
+            if (list.size()>0) {
                 selectedPositionSecond = 0;
             }
-            rvFilter.setAdapter(adapter);
         }
+        adapter = new XAdapter<T>(activity, list, R.layout.popup_item_filter) {
+
+            @Override
+            protected void handleItemViewClick(CustomHolder holder, T item) {
+                int oldPos = selectedList.get(selectedPosition);
+                int pos = holder.getAdapterPosition();
+                selectedPositionSecond = pos;
+                selectedList.set(selectedPosition, pos);
+                notifyItemChanged(pos);
+                if (oldPos >= 0) {
+                    notifyItemChanged(oldPos);
+                }
+            }
+
+            @Override
+            public void creatingHolder(CustomHolder holder, List<T> dataList, int adapterPos, int viewType) {
+                holder.getView(R.id.select_arrow);
+                holder.getView(R.id.filter_name);
+
+            }
+
+            @Override
+            public void bindingHolder(CustomHolder holder, List<T> dataList, int pos) {
+                TextView tvName =  holder.getView(R.id.filter_name);
+                ImageView ivArrow =  holder.getView(R.id.select_arrow);
+                tvName.setText(getSecondListItemText(dataList.get(pos)));
+                if (pos == selectedList.get(selectedPosition)) {
+//                if (pos == selectedPositionSecond) {
+                    tvName.setTextColor(activity.getResources().getColor(R.color.text_blue));
+                    ivArrow.setVisibility(View.VISIBLE);
+                } else {
+                    tvName.setTextColor(activity.getResources().getColor(R.color.text_color));
+                    ivArrow.setVisibility(View.GONE);
+                }
+                holder.getRootView().setBackgroundResource(R.color.white);
+                holder.getRootView().setTag(filters.get(selectedPosition));
+            }
+        };
+
+        adapter.setOnItemClickListener(itemClickListener);
+
+        rvFilter.setAdapter(adapter);
         rvFirstFilter.setAdapter(firstAdapter);
 
-    }
-
-    private XAdapter setSecondAdapter(List list) {
-        XAdapter adapter = new XAdapter(activity, list, R.layout.popup_item_filter) {
-        @Override
-        public void creatingHolder(final CustomHolder holder, final List dataList, int viewType) {
-            holder.getView(R.id.select_arrow);
-            holder.getView(R.id.filter_name);
-            holder.getRootView().setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    int oldPos = selectedPositionSecond;
-                    int pos = holder.getAdapterPosition();
-                    selectedPositionSecond = pos;
-                    if (itemClickListener != null) itemClickListener.onItemClick(v, dataList.get(pos), pos);
-                    notifyItemChanged(pos);
-                    if (oldPos >= 0) {
-                        notifyItemChanged(oldPos);
-                    }
-                }
-            });
-        }
-
-        @Override
-        public void bindingHolder(CustomHolder holder, List dataList, int pos) {
-            TextView tvName = (TextView) holder.getView(R.id.filter_name);
-            ImageView ivArrow = (ImageView) holder.getView(R.id.select_arrow);
-            tvName.setText(getSecondListItemText((T) dataList.get(pos)));
-            if (pos == selectedPositionSecond) {
-                tvName.setTextColor(activity.getResources().getColor(R.color.text_blue));
-                ivArrow.setVisibility(View.VISIBLE);
-            } else {
-                tvName.setTextColor(activity.getResources().getColor(R.color.text_color));
-                ivArrow.setVisibility(View.GONE);
-            }
-            holder.getRootView().setBackgroundResource(R.color.white);
-        }
-    };
-        return adapter;
     }
 
     public <V extends View> V getBottomView(int bottomViewId) {
@@ -186,10 +194,6 @@ public abstract class DownDoubleListPopupWindow<T> extends PopupWindow {
         this.listLayout.setLayoutParams(params);
     }
 
-    public void performFirstClick(int pos) {
-//        itemClickListener.onItemClick();
-    }
-
     /**
      * 返回每个Item显示的文字
      *
@@ -197,9 +201,9 @@ public abstract class DownDoubleListPopupWindow<T> extends PopupWindow {
      */
     protected abstract String getFirstListItemText(T item);
 
-    protected abstract String getSecondListItemText(T item);
+    protected abstract String getSecondListItemText(Object item);
 
-    protected abstract List<T> getSecondAdapterList(T firstListItem);
+    protected abstract List getSecondAdapterList(T firstListItem);
 
 
 }

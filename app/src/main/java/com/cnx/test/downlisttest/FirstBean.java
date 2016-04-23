@@ -3,13 +3,13 @@ package com.cnx.test.downlisttest;
 /**
  * Created by 18953 on 2016/4/3.
  */
-public class UserBean {
+public class FirstBean {
     private String name;
     private int type;
     private int ID;
 
 
-    public UserBean(int ID, String name, int type) {
+    public FirstBean(int ID, String name, int type) {
         this.ID = ID;
         this.name = name;
         this.type = type;

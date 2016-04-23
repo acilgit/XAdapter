@@ -3,11 +3,11 @@ package com.cnx.test.downlisttest;
 /**
  * Created by 18953 on 2016/4/3.
  */
-public class EventBean {
+public class SecondBean {
     private String des;
     private int ID;
 
-    public EventBean(String des, int ID) {
+    public SecondBean(String des, int ID) {
         this.des = des;
         this.ID = ID;
     }

@@ -1,6 +1,8 @@
 package com.cnx.test.downlisttest;
 
 import android.app.Activity;
+import android.graphics.drawable.BitmapDrawable;
+import android.support.annotation.LayoutRes;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.SparseArray;
@@ -12,8 +14,6 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
-
-import com.cnx.test.downlisttest.adapter.XAdapter;
 
 import java.util.List;
 
@@ -34,9 +34,9 @@ public abstract class DownListPopupWindow<T> extends PopupWindow {
     private SparseArray<View> bottomViewList;
     private View bottomLayout;
     private View rootView;
+    private XAdapter<T> adapter;
 
-    public DownListPopupWindow(Activity activity, List<T> filters, XAdapter.OnItemClickListener itemClickListener, int bottomLayoutId) {
-//        super(activity.getLayoutInflater().inflate(R.layout.popup_window_filter, null), ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
+    public DownListPopupWindow(Activity activity, List<T> filters, XAdapter.OnItemClickListener itemClickListener, @LayoutRes int bottomLayoutId) {
         super(activity);
         this.activity = activity;
         this.itemClickListener = itemClickListener;
@@ -57,41 +57,40 @@ public abstract class DownListPopupWindow<T> extends PopupWindow {
         rootView = inflater.inflate(R.layout.popup_window_filter, null);
 
         setContentView(rootView);
-        //设置SelectPicPopupWindow弹出窗体的宽
         this.setWidth(ViewGroup.LayoutParams.MATCH_PARENT);
-        //设置SelectPicPopupWindow弹出窗体的高
         this.setHeight(ViewGroup.LayoutParams.MATCH_PARENT);
-        this.setBackgroundDrawable(null);
+        this.setBackgroundDrawable(new BitmapDrawable());
+        this.setFocusable(true);
         update();
 
         listLayout = (LinearLayout) rootView.findViewById(R.id.llFilterList);
         RecyclerView rvFilter = (RecyclerView) rootView.findViewById(R.id.rvFilter);
         rvFilter.setLayoutManager(new LinearLayoutManager(activity));
-        XAdapter adapter = new XAdapter(activity, filters, R.layout.popup_item_filter) {
+        adapter = new XAdapter<T>(activity, filters, R.layout.popup_item_filter) {
+
             @Override
-            public void creatingHolder(final CustomHolder holder, final List dataList, int viewType) {
-                holder.getView(R.id.select_arrow);
-                holder.getView(R.id.filter_name);
-                holder.getRootView().setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        int oldPos = selectedPosition;
-                        int pos = holder.getAdapterPosition();
-                        selectedPosition = pos;
-                        if (itemClickListener != null) itemClickListener.onItemClick(v, dataList.get(pos), pos);
-                        notifyItemChanged(pos);
-                        if (oldPos >= 0) {
-                            notifyItemChanged(oldPos);
-                        }
-                    }
-                });
+            protected void handleItemViewClick(CustomHolder holder, T item) {
+                int oldPos = selectedPosition;
+                int pos = holder.getAdapterPosition();
+                selectedPosition = pos;
+                notifyItemChanged(pos);
+                if (oldPos >= 0) {
+                    notifyItemChanged(oldPos);
+                }
             }
 
             @Override
-            public void bindingHolder(CustomHolder holder, List dataList, int pos) {
-                TextView tvName = (TextView) holder.getView(R.id.filter_name);
-                ImageView ivArrow = (ImageView) holder.getView(R.id.select_arrow);
-                tvName.setText(getItemText((T) dataList.get(pos)));
+            public void creatingHolder(CustomHolder holder, List<T> dataList, int adapterPos, int viewType) {
+                holder.getView(R.id.select_arrow);
+                holder.getView(R.id.filter_name);
+
+            }
+
+            @Override
+            public void bindingHolder(CustomHolder holder, List<T> dataList, int pos) {
+                TextView tvName =  holder.getView(R.id.filter_name);
+                ImageView ivArrow =  holder.getView(R.id.select_arrow);
+                tvName.setText(getItemText(dataList.get(pos)));
                 if (pos == selectedPosition) {
                     tvName.setTextColor(activity.getResources().getColor(R.color.text_blue));
                     ivArrow.setVisibility(View.VISIBLE);
@@ -103,6 +102,7 @@ public abstract class DownListPopupWindow<T> extends PopupWindow {
             }
         };
         adapter.setOnItemClickListener(itemClickListener);
+
 
         rvFilter.setAdapter(adapter);
     }

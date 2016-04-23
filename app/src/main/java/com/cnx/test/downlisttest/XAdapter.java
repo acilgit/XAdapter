@@ -1,7 +1,8 @@
-package com.cnx.test.downlisttest.adapter;
+package com.cnx.test.downlisttest;
 
 
 import android.content.Context;
+import android.support.annotation.LayoutRes;
 import android.support.v7.widget.RecyclerView;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
@@ -31,7 +32,7 @@ public abstract class XAdapter<T> extends RecyclerView.Adapter {
      * @param dataList
      * @param layoutId
      */
-    public XAdapter(Context context, List<T> dataList, int layoutId) {
+    public XAdapter(Context context, List<T> dataList, @LayoutRes int layoutId) {
         this.context = context;
         this.dataList = dataList;
         this.layoutIdList = new SparseArray<>();
@@ -51,11 +52,35 @@ public abstract class XAdapter<T> extends RecyclerView.Adapter {
     }
 
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        int layoutId = (layoutIdList.size() == 1 ? layoutIdList.get(SINGLE_LAYOUT) : layoutIdList.get(viewType));
-        View itemView =LayoutInflater.from(context).inflate(layoutId, parent, false);
-        CustomHolder holder = new CustomHolder(itemView);
-        creatingHolder(holder, dataList, viewType);
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, final int viewType) {
+        @LayoutRes int layoutId = (layoutIdList.size() == 1 ? layoutIdList.get(SINGLE_LAYOUT) : layoutIdList.get(viewType));
+        View itemView = LayoutInflater.from(context).inflate(layoutId, parent, false);
+        final CustomHolder holder = new CustomHolder(itemView){
+            @Override
+            protected void createHolder(final CustomHolder holder) {
+                holder.getRootView().setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    handleItemViewClick(holder, dataList.get(holder.getAdapterPosition()));
+                    if (onItemClickListener != null) {
+                        onItemClickListener.onItemClick(holder, dataList.get(holder.getAdapterPosition()));
+                    }
+                }
+            });
+
+                if (onItemLongClickListener != null) {
+                    holder.getRootView().setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            onItemLongClickListener.onItemLongClick(holder, dataList.get(holder.getAdapterPosition()));
+                        }
+                    });
+                }
+                 creatingHolder(holder, dataList, getAdapterPosition(), viewType);
+            }
+        };
+        
+
         return holder;
     }
 
@@ -70,7 +95,7 @@ public abstract class XAdapter<T> extends RecyclerView.Adapter {
      * @param dataList
      * @param viewType
      */
-    public abstract void creatingHolder(CustomHolder holder, List<T> dataList, int viewType);
+    public abstract void creatingHolder(CustomHolder holder, List<T> dataList,int adapterPos, int viewType);
 
     /**
      * 在适配器中显示数据集
@@ -80,13 +105,13 @@ public abstract class XAdapter<T> extends RecyclerView.Adapter {
      */
     public abstract void bindingHolder(CustomHolder holder, List<T> dataList, int pos);
 
+
     /**
      * 复写此方法可以在不同的layout中显示
-     * @param dataList
-     * @param pos
+     * @param item
      * @return
      */
-    protected int getItemType(List<T> dataList, int pos) {
+    protected int getItemType(T item) {
         return SINGLE_LAYOUT;
     }
 
@@ -111,6 +136,11 @@ public abstract class XAdapter<T> extends RecyclerView.Adapter {
         notifyDataSetChanged();
     }
 
+    public void removeItem( int pos) {
+        dataList.remove(pos);
+        notifyItemRemoved(pos);
+    }
+
     public void addItem( int pos, T item) {
         dataList.add(pos, item);
         notifyItemInserted(pos);
@@ -123,7 +153,7 @@ public abstract class XAdapter<T> extends RecyclerView.Adapter {
 
     @Override
     public int getItemViewType(int position) {
-        int type = getItemType(dataList, position);
+        int type = getItemType(dataList.get(position));
         if (type == SINGLE_LAYOUT) {
             return super.getItemViewType(position);
         } else {
@@ -141,20 +171,29 @@ public abstract class XAdapter<T> extends RecyclerView.Adapter {
     }
 
     /**
+     * 重写此事件，用于处理holder rootView点击事件，处理完毕后再处理onItemClickListener()
+     * @param holder
+     * @param item
+     */
+    protected void handleItemViewClick(CustomHolder holder, T item) {
+
+    }
+
+    /**
      * 点击接口
      */
-    public interface OnItemClickListener {
-        void onItemClick(View view, Object item, int pos);
+    public interface OnItemClickListener<T> {
+        void onItemClick(CustomHolder holder, T item);
     }
 
     /**
      * 长按接口
      */
-    public interface OnItemLongClickListener {
-        void onItemLongClick(View view, Object item, int pos);
+    public interface OnItemLongClickListener<T> {
+        void onItemLongClick(CustomHolder holder, T item);
     }
 
-    public class CustomHolder extends RecyclerView.ViewHolder {
+    public  static abstract class CustomHolder extends RecyclerView.ViewHolder {
 
         private SparseArray<View> viewList;
         private View itemView;
@@ -163,7 +202,10 @@ public abstract class XAdapter<T> extends RecyclerView.Adapter {
             super(itemView);
             this.itemView = itemView;
             viewList = new SparseArray<>();
+            createHolder(this);
         }
+
+        protected abstract void createHolder(CustomHolder holder);
 
         public <T extends View> T getView(int viewId) {
             View view = viewList.get(viewId);
